@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2019 leoetlino <leo@leolam.fr>
  *
- * This file is part of syaz0.
+ * This file is part of nlzss11.
  *
- * syaz0 is free software: you can redistribute it and/or modify
+ * nlzss11 is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * syaz0 is distributed in the hope that it will be useful,
+ * nlzss11 is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with syaz0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with nlzss11.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <pybind11/pybind11.h>
@@ -25,10 +25,12 @@
 
 #include "common/binary_reader.h"
 #include "common/types.h"
-#include "yaz0.h"
+#include "nlzss11.h"
 
 namespace py = pybind11;
 using namespace py::literals;
+
+PYBIND11_MAKE_OPAQUE(std::vector<u8>);
 
 namespace detail {
 static tcb::span<u8> PyBytesToSpan(py::bytes b) {
@@ -50,31 +52,25 @@ void Bind(py::class_<C>& cl, const char* name, common::EndianInt<D, E> C::*pm) {
 }
 }  // namespace detail
 
-PYBIND11_MAKE_OPAQUE(std::vector<u8>);
-
-PYBIND11_MODULE(syaz0, m) {
+PYBIND11_MODULE(nlzss11, m) {
   py::bind_vector<std::vector<u8>>(m, "Bytes", py::buffer_protocol());
 
-  auto header_cl = py::class_<syaz0::Header>(m, "Header");
-  header_cl.def_readwrite("magic", &syaz0::Header::magic);
-  detail::Bind(header_cl, "uncompressed_size", &syaz0::Header::uncompressed_size);
-  detail::Bind(header_cl, "data_alignment", &syaz0::Header::data_alignment);
-  header_cl.def_readwrite("reserved", &syaz0::Header::reserved);
-
   m.def(
-      "get_header",
-      [](py::buffer data_py) { return syaz0::GetHeader(detail::PyBufferToSpan(data_py)).value(); },
+      "get_uncompressed_size",
+      [](py::buffer data_py) {
+        return nlzss11::GetUncompressedFilesize(detail::PyBufferToSpan(data_py)).value();
+      },
       "data"_a);
 
   m.def(
       "decompress",
       [](py::buffer src_py) {
         const auto src = detail::PyBufferToSpan(src_py);
-        const auto header = syaz0::GetHeader(src);
-        if (!header)
+        const auto uncompressed_size = nlzss11::GetUncompressedFilesize(src);
+        if (!uncompressed_size)
           throw py::value_error("Invalid Yaz0 header");
-        py::bytes dst_py{nullptr, header->uncompressed_size};
-        syaz0::Decompress(src, detail::PyBytesToSpan(dst_py));
+        py::bytes dst_py{nullptr, uncompressed_size.value()};
+        nlzss11::Decompress(src, detail::PyBytesToSpan(dst_py));
         return dst_py;
       },
       "data"_a);
@@ -83,17 +79,18 @@ PYBIND11_MODULE(syaz0, m) {
       "decompress_unsafe",
       [](py::bytes src_py) {
         const auto src = detail::PyBytesToSpan(src_py);
-        py::bytes dst_py{nullptr, syaz0::GetHeader(src)->uncompressed_size};
-        syaz0::DecompressUnsafe(src, detail::PyBytesToSpan(dst_py));
+        py::bytes dst_py{nullptr, nlzss11::GetUncompressedFilesize(src).value()};
+        nlzss11::DecompressUnsafe(src, detail::PyBytesToSpan(dst_py));
         return dst_py;
       },
       "data"_a);
 
   m.def(
       "compress",
-      [](py::buffer src_py, u32 data_alignment, int level) {
+      [](py::buffer src_py, int level) {
         const auto src = detail::PyBufferToSpan(src_py);
-        return syaz0::Compress(src, data_alignment, level);
+        const auto compressed = nlzss11::Compress(src, level);
+        return compressed;
       },
-      "data"_a, "data_alignment"_a = 0, "level"_a = 7);
+      "data"_a, "level"_a = 7);
 }

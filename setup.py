@@ -70,15 +70,15 @@ cmdclass = versioneer.get_cmdclass()
 cmdclass["build_ext"] = CMakeBuild
 
 setuptools.setup(
-    name="syaz0",
+    name="nlzss11",
     version=versioneer.get_version(),
     cmdclass=cmdclass,
     author="leoetlino",
     author_email="leo@leolam.fr",
-    description="Library for data compression using Nintendo's Yaz0 algorithm",
+    description="Library for data (de)compression using Nintendo's lzss11 algorithm",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/zeldamods/syaz0",
+    url="https://github.com/lepelog/nlzss11",
     packages=setuptools.find_packages(),
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
@@ -88,6 +88,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3 :: Only",
     ],
     python_requires=">=3.6",
-    ext_modules=[CMakeExtension(name="syaz0", sourcedir="src")],
+    ext_modules=[CMakeExtension(name="nlzss11", sourcedir="src")],
     zip_safe=False,
 )

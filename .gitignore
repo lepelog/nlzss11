@@ -18,4 +18,5 @@ build/
 *.nam
 *.til
 
-test/files/TwnObj_HyruleCastle_A.Tex.sbfres
+# files taken from the game 
+test/files/*.LZ

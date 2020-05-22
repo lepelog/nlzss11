@@ -1,23 +1,23 @@
 /**
  * Copyright (C) 2019 leoetlino <leo@leolam.fr>
  *
- * This file is part of syaz0.
+ * This file is part of nlzss11.
  *
- * syaz0 is free software: you can redistribute it and/or modify
+ * nlzss11 is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * syaz0 is distributed in the hope that it will be useful,
+ * nlzss11 is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with syaz0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with nlzss11.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "yaz0.h"
+#include "nlzss11.h"
 
 #include <algorithm>
 #include <bitset>
@@ -27,25 +27,22 @@
 
 #include "common/binary_reader.h"
 
-namespace syaz0 {
+namespace nlzss11 {
 
-constexpr std::array<char, 4> Magic = {'Y', 'a', 'z', '0'};
-constexpr size_t ChunksPerGroup = 8;
-constexpr size_t MaximumMatchLength = 0xFF + 0x12;
+constexpr char Magic = 0x11;
+const constexpr size_t ChunksPerGroup = 8;
+constexpr size_t MaximumMatchLength = 0x111 + 0xFFFF;
 constexpr size_t WindowSize = 0x1000;
 
-static std::optional<Header> GetHeader(common::BinaryReader& reader) {
-  const auto header = reader.Read<Header>();
-  if (!header)
+std::optional<u32> GetUncompressedFilesize(tcb::span<const u8> data) {
+  if (data.size() < 4) {
     return std::nullopt;
-  if (header->magic != Magic)
+  }
+  const auto magic = data[0];
+  const u32 file_size = data[1] | (data[2] << 8) | (data[3] << 16);
+  if (magic != Magic)
     return std::nullopt;
-  return header;
-}
-
-std::optional<Header> GetHeader(tcb::span<const u8> data) {
-  common::BinaryReader reader{data, common::Endianness::Big};
-  return GetHeader(reader);
+  return file_size;
 }
 
 namespace {
@@ -56,10 +53,10 @@ public:
   void HandleZlibMatch(u32 dist, u32 lc) {
     if (dist == 0) {
       // Literal.
-      m_group_header.set(7 - m_pending_chunks);
       m_result.push_back(u8(lc));
     } else {
       // Back reference.
+      m_group_header.set(7 - m_pending_chunks);
       constexpr u32 ZlibMinMatch = 3;
       WriteMatch(dist - 1, lc + ZlibMinMatch);
     }
@@ -86,15 +83,19 @@ private:
   }
 
   void WriteMatch(u32 distance, u32 length) {
-    if (length < 18) {
-      m_result.push_back(((length - 2) << 4) | u8(distance >> 8));
-      m_result.push_back(u8(distance));
+    if (length <= 0xF + 1) {
+      m_result.push_back((length - 1) << 4 | distance >> 8);
+      m_result.push_back(distance & 0xFF);
+    } else if (length <= 0x11 + 0xFF) {
+      m_result.push_back((length - 0x11) >> 4);
+      m_result.push_back(((length - 0x11) & 0xF) << 4 | distance >> 8);
+      m_result.push_back(distance & 0xFF);
     } else {
-      // If the match is longer than 18 bytes, 3 bytes are needed to write the match.
-      const size_t actual_length = std::min<size_t>(MaximumMatchLength, length);
-      m_result.push_back(u8(distance >> 8));
-      m_result.push_back(u8(distance));
-      m_result.push_back(u8(actual_length - 0x12));
+      const size_t actual_length = std::min<size_t>(MaximumMatchLength, length) - 0x111;
+      m_result.push_back(0x10 | actual_length >> 12);
+      m_result.push_back((actual_length >> 4) & 0xFF);
+      m_result.push_back((actual_length & 0xF) << 4 | distance >> 8);
+      m_result.push_back(distance & 0xFF);
     }
   }
 
@@ -105,17 +106,15 @@ private:
 };
 }  // namespace
 
-std::vector<u8> Compress(tcb::span<const u8> src, u32 data_alignment, int level) {
-  std::vector<u8> result(sizeof(Header));
+std::vector<u8> Compress(tcb::span<const u8> src, int level) {
+  std::vector<u8> result(4);  // Header size
   result.reserve(src.size());
 
   // Write the header.
-  Header header;
-  header.magic = Magic;
-  header.uncompressed_size = u32(src.size());
-  header.data_alignment = data_alignment;
-  header.reserved.fill(0);
-  std::memcpy(result.data(), &header, sizeof(header));
+  result[0] = 0x11;
+  result[1] = src.size() & 0xFF;
+  result[2] = (src.size() >> 8) & 0xFF;
+  result[3] = (src.size() >> 16) & 0xFF;
 
   GroupWriter writer{result};
 
@@ -134,10 +133,10 @@ std::vector<u8> Compress(tcb::span<const u8> src, u32 data_alignment, int level)
 }
 
 std::vector<u8> Decompress(tcb::span<const u8> src) {
-  const auto header = GetHeader(src);
-  if (!header)
+  const auto uncompressed_size = GetUncompressedFilesize(src);
+  if (!uncompressed_size)
     return {};
-  std::vector<u8> result(header->uncompressed_size);
+  std::vector<u8> result(uncompressed_size.value());
   Decompress(src, result);
   return result;
 }
@@ -145,7 +144,7 @@ std::vector<u8> Decompress(tcb::span<const u8> src) {
 template <bool Safe>
 static void Decompress(tcb::span<const u8> src, tcb::span<u8> dst) {
   common::BinaryReader reader{src, common::Endianness::Big};
-  reader.Seek(sizeof(Header));
+  reader.Seek(4);
 
   u8 group_header = 0;
   size_t remaining_chunks = 0;
@@ -155,13 +154,33 @@ static void Decompress(tcb::span<const u8> src, tcb::span<u8> dst) {
       remaining_chunks = ChunksPerGroup;
     }
 
-    if (group_header & 0x80) {
+    if (!(group_header & 0x80)) {
       *dst_it++ = reader.Read<u8, Safe>().value();
     } else {
       const u16 pair = reader.Read<u16, Safe>().value();
-      const size_t distance = (pair & 0x0FFF) + 1;
-      const size_t length =
-          ((pair >> 12) ? (pair >> 12) : (reader.Read<u8, Safe>().value() + 16)) + 2;
+      size_t distance, length;
+      // check for 4 indication bits
+      switch (pair & 0xF000) {
+      case 0:
+        // uses 3 bytes
+        length = (pair >> 4) + 0x11;
+        distance = ((pair & 0xF) << 8 | reader.Read<u8, Safe>().value()) + 1;
+        break;
+      case 0x1000:
+        // uses 4 bytes
+        {
+          const u16 ext_pair = reader.Read<u16, Safe>().value();
+          length = ((pair & 0xFFF) << 4 | ext_pair >> 12) + 0x111;
+          distance = (ext_pair & 0xFFF) + 1;
+        }
+        break;
+      default:
+        // uses 2 bytes
+        length = (pair >> 12) + 1;
+        distance = (pair & 0xFFF) + 1;
+      }
+
+      // printf("length: %d, distance: %d\n", length, distance);
 
       const u8* base = dst_it - distance;
       if (base < dst.begin() || dst_it + length > dst.end()) {
@@ -184,4 +203,4 @@ void Decompress(tcb::span<const u8> src, tcb::span<u8> dst) {
 void DecompressUnsafe(tcb::span<const u8> src, tcb::span<u8> dst) {
   Decompress<false>(src, dst);
 }
-}  // namespace syaz0
+}  // namespace nlzss11
