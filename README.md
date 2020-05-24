@@ -45,6 +45,13 @@ When no binary build is available, pip will automatically build from source duri
 
 To build and install from source run `pip3 install .`.
 
+### Building for manylinux
+- Use the manylinux docker container in this directory:  
+  `docker run -v $PWD:/home/build/nlzss11 -ti quay.io/pypa/manylinux2010_x86_64 bash`
+- Install cmake3 via yum and override old cmake
+- Install pybind11 from source
+- run `setup.py bdist_wheel` with every cpython version you want from `/opt/python`
+
 ## License
 
 This software is licensed under the terms of the GNU General Public License, version 2 or later.
