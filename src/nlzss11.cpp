@@ -39,7 +39,11 @@ std::optional<u32> GetUncompressedFilesize(tcb::span<const u8> data) {
     return std::nullopt;
   }
   const auto magic = data[0];
-  const u32 file_size = data[1] | (data[2] << 8) | (data[3] << 16);
+  u32 file_size = data[1] | (data[2] << 8) | (data[3] << 16);
+  // very big files have the size in bytes 4-8
+  if (file_size == 0) {
+    file_size = data[4] | (data[5] << 8) | (data[6] << 16) | (data[7] << 24);
+  }
   if (magic != Magic)
     return std::nullopt;
   return file_size;
@@ -144,7 +148,11 @@ std::vector<u8> Decompress(tcb::span<const u8> src) {
 template <bool Safe>
 static void Decompress(tcb::span<const u8> src, tcb::span<u8> dst) {
   common::BinaryReader reader{src, common::Endianness::Big};
-  reader.Seek(4);
+  if (dst.size() > 0xFFFFFF) {
+    reader.Seek(8);
+  } else {
+    reader.Seek(4);
+  }
 
   u8 group_header = 0;
   size_t remaining_chunks = 0;
