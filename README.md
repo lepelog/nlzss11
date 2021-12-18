@@ -48,9 +48,12 @@ To build and install from source run `pip3 install .`.
 ### Building for manylinux
 - Use the manylinux docker container in this directory:  
   `docker run -v $PWD:/home/build/nlzss11 -ti quay.io/pypa/manylinux2010_x86_64 bash`
-- Install cmake3 via yum and override old cmake
-- Install pybind11 from source
+- Run `bash build-on-manylinux.sh`
 - run `setup.py bdist_wheel` with every cpython version you want from `/opt/python`
+
+## Changelog
+### 1.3
+- decompress support for files > 0xFFFFFF (found in SSHD)
 
 ## License
 

@@ -6,6 +6,7 @@ __pycache__/
 *.dll
 dist/
 build/
+wheelhouse/
 .mypy_cache/
 .vscode/
 .benchmarks/

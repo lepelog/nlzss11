@@ -1,5 +1,4 @@
 import setuptools
-import versioneer
 
 import os
 import re
@@ -66,12 +65,12 @@ class CMakeBuild(build_ext):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-cmdclass = versioneer.get_cmdclass()
+cmdclass = {}
 cmdclass["build_ext"] = CMakeBuild
 
 setuptools.setup(
     name="nlzss11",
-    version=versioneer.get_version(),
+    version="1.3",
     cmdclass=cmdclass,
     author="lepelog",
     description="Library for data (de)compression using Nintendo's lzss11 algorithm",
