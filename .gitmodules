@@ -1,3 +1,6 @@
 [submodule "src/lib/syaz0/lib/zlib-ng"]
 	path = src/lib/zlib-ng
 	url = https://github.com/zeldamods/zlib-ng
+[submodule "src/lib/pybind11"]
+	path = src/lib/pybind11
+	url = https://github.com/pybind/pybind11.git

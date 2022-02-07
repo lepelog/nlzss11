@@ -7,7 +7,7 @@ else()
   set(PYBIND11_CPP_STANDARD -std=c++17)
 endif()
 
-find_package(pybind11 REQUIRED)
+add_subdirectory(./lib/pybind11)
 
 pybind11_add_module(nlzss11
   common/binary_reader.h
