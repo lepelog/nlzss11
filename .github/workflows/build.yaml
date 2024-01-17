@@ -6,13 +6,13 @@ jobs:
     runs-on: [windows-latest]
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: git submodule update --init --recursive
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -30,16 +30,16 @@ jobs:
   release-lin:
     runs-on: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: git submodule update --init --recursive
     # - name: Set up Python
-    #   uses: actions/setup-python@v2
+    #   uses: actions/setup-python@v5
     #   with:
     #     python-version: '3.10'
     - name: Build
       uses: RalfG/python-wheels-manylinux-build@v0.2-manylinux2014_x86_64
       with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311'
+        python-versions: 'cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312'
         system-packages: 'epel-release cmake3'
         package-path: ''
     - name: Upload wheels
@@ -52,15 +52,15 @@ jobs:
     runs-on: [macos-latest]
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.14"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: git submodule update --init --recursive
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
