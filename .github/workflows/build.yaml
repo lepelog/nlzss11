@@ -24,7 +24,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@master
       with:
-        name: dist
+        name: dist-win-${{ matrix.python-version }}
         path: dist
 
   release-lin:
@@ -72,5 +72,5 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@master
       with:
-        name: dist
+        name: dist-mac-${{ matrix.python-version }}
         path: dist
