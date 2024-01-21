@@ -13,11 +13,11 @@ Returns the size in bytes of the file if uncompressed or None if the bytes are n
 
 ### `nlzss11.decompress(data)`
 
-Decompresses Yaz0-compressed data from a bytes-like object `data`. Returns a bytes object containing the uncompressed data.
+Decompresses nlzss11-compressed data from a bytes-like object `data`. Returns a bytes object containing the uncompressed data.
 
 ### `nlzss11.decompress_unsafe(data)`
 
-Decompresses Yaz0-compressed data from a bytes (*not* bytes-like) object `data`. Returns a bytes object containing the uncompressed data.
+Decompresses nlzss11-compressed data from a bytes (*not* bytes-like) object `data`. Returns a bytes object containing the uncompressed data.
 
 Unlike nlzss11.decompress, this function assumes that the input data is well-formed. In exchange for slightly improved performance, no sanity checks are performed. **Warning**: Do not use on untrusted data.
 

@@ -68,7 +68,7 @@ PYBIND11_MODULE(nlzss11, m) {
         const auto src = detail::PyBufferToSpan(src_py);
         const auto uncompressed_size = nlzss11::GetUncompressedFilesize(src);
         if (!uncompressed_size)
-          throw py::value_error("Invalid Yaz0 header");
+          throw py::value_error("Invalid nlzss11 header");
         py::bytes dst_py{nullptr, uncompressed_size.value()};
         nlzss11::Decompress(src, detail::PyBytesToSpan(dst_py));
         return dst_py;
