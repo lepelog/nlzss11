@@ -42,8 +42,6 @@ jobs:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312'
         system-packages: 'epel-release cmake3'
         package-path: ''
-    - name: Build
-      run: python setup.py sdist
     - name: Upload wheels
       uses: actions/upload-artifact@master
       with:
@@ -68,7 +66,7 @@ jobs:
         path: dist
 
   release-macos:
-    runs-on: [macos-latest]
+    runs-on: [macos-13]
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
