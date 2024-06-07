@@ -9,7 +9,7 @@ Reference implementation: [nlzss](https://github.com/magical/nlzss)
 
 ### `nlzss11.get_uncompressed_size(data)`
 
-Returns the size in bytes of the file if uncompressed or None if the bytes are not a valid Nintendo LZSS 11 compressed file
+Returns the size in bytes of the file if uncompressed or None if the bytes are not a valid Nintendo LZSS 11 compressed file.
 
 ### `nlzss11.decompress(data)`
 
@@ -52,6 +52,8 @@ To build and install from source run `pip3 install .`.
 - run `setup.py bdist_wheel` with every cpython version you want from `/opt/python`
 
 ## Changelog
+### 1,7
+- recompress support for files > 0xFFFFFF (found in SSHD)
 ### 1.3
 - decompress support for files > 0xFFFFFF (found in SSHD)
 

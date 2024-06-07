@@ -111,14 +111,32 @@ private:
 }  // namespace
 
 std::vector<u8> Compress(tcb::span<const u8> src, int level) {
-  std::vector<u8> result(4);  // Header size
+  u8 vecSize = 4;
+  if(src.size() > 0xFFFFFF) vecSize = 8;
+
+  std::vector<u8> result(vecSize);  // Header size
   result.reserve(src.size());
 
   // Write the header.
   result[0] = 0x11;
-  result[1] = src.size() & 0xFF;
-  result[2] = (src.size() >> 8) & 0xFF;
-  result[3] = (src.size() >> 16) & 0xFF;
+
+  // if filesize is bigger than 0xFFFFFF, header is 8 bytes long
+  if(src.size() > 0xFFFFFF)
+  {
+    result[1] = 0 & 0xFF;
+    result[2] = 0 & 0xFF;
+    result[3] = 0 & 0xFF;
+    result[4] = src.size() & 0xFF;
+    result[5] = (src.size() >> 8) & 0xFF;
+    result[6] = (src.size() >> 16) & 0xFF;
+    result[7] = (src.size() >> 24) & 0xFF;
+  }
+  else
+  {
+    result[1] = src.size() & 0xFF;
+    result[2] = (src.size() >> 8) & 0xFF;
+    result[3] = (src.size() >> 16) & 0xFF;
+  }
 
   GroupWriter writer{result};
 
