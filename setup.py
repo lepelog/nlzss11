@@ -70,7 +70,7 @@ cmdclass["build_ext"] = CMakeBuild
 
 setuptools.setup(
     name="nlzss11",
-    version="1.7",
+    version="1.8",
     cmdclass=cmdclass,
     author="lepelog",
     description="Library for data (de)compression using Nintendo's lzss11 algorithm",
