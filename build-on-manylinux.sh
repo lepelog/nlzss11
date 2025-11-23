@@ -9,7 +9,7 @@ ln -sf /usr/bin/cmake3 /usr/bin/cmake
 # install pybind11
 mkdir ~/temp_pybind
 cd ~/temp_pybind
-curl -L https://github.com/pybind/pybind11/archive/v2.13.6.tar.gz -o pybind11.tar.gz && tar -xzf pybind11.tar.gz && cd pybind11-2.13.6/
+curl -L https://github.com/pybind/pybind11/archive/v3.0.1.tar.gz -o pybind11.tar.gz && tar -xzf pybind11.tar.gz && cd pybind11-3.0.1/
 
 mkdir build && cd build
 cmake -DPYBIND11_TEST=false ..
